@@ -7,6 +7,8 @@
 .env
 
 # User-specific files
+helper.txt
+# User-specific files
 *.rsuser
 *.suo
 *.user
