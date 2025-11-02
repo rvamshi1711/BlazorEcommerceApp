@@ -4,6 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using BlazorEcommerceApp.Components;
 using BlazorEcommerceApp.Components.Account;
 using BlazorEcommerceApp.Data;
+using DotNetEnv;
+
+Env.Load();
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,9 +28,15 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var dbHost = Environment.GetEnvironmentVariable("DB_SERVER") ?? throw new InvalidOperationException("DB_SERVER not found in environment variables.");
+var dbName = Environment.GetEnvironmentVariable("DB_DATABASE") ?? throw new InvalidOperationException("DB_DATABASE not found in environment variables.");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? throw new InvalidOperationException("DB_USER not found in environment variables.");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? throw new InvalidOperationException("DB_PASSWORD not found in environment variables.");
+
+var connectionString = $"Server={dbHost};Database={dbName};User Id={dbUser};Password={dbPassword};Trusted_Connection=True;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=True;";
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
@@ -36,6 +47,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();  // applies any pending migrations automatically
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
