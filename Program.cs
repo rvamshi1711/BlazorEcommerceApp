@@ -5,6 +5,8 @@ using BlazorEcommerceApp.Components;
 using BlazorEcommerceApp.Components.Account;
 using BlazorEcommerceApp.Data;
 using DotNetEnv;
+using BlazorEcommerceApp.Repository.IRepository;
+using BlazorEcommerceApp.Repository;
 
 Env.Load();
 
@@ -38,7 +40,8 @@ var connectionString = $"Server={dbHost};Database={dbName};User Id={dbUser};Pass
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()

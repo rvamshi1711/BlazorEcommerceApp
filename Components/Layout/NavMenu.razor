@@ -19,6 +19,18 @@
         </div>
 
         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="category">
+                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Category
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="product">
+                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Product
+            </NavLink>
+        </div>
+        <!--
+        <div class="nav-item px-3">
             <NavLink class="nav-link" href="counter">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
             </NavLink>
@@ -29,12 +41,14 @@
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
             </NavLink>
         </div>
-
+        -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="auth">
                 <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
             </NavLink>
         </div>
+
+
 
         <AuthorizeView>
             <Authorized>
@@ -89,4 +103,3 @@
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
-

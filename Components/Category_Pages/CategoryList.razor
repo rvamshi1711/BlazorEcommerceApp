@@ -1,0 +1,99 @@
+@page "/category"
+@using System.Runtime.CompilerServices
+@using System.Threading.Tasks
+@inject ICategoryRepository _categoryRepository
+@inject IJSRuntime _JS
+<BsModal @ref="confirmModal" OnModalConfirmation="ConfirmDelete_Click">
+</BsModal>
+<h3>Category List</h3>
+<div class="col-10 text-end">
+    <a href="category/create" class="btn btn-primary ">Add New Category</a>
+</div>
+
+@if (isProcessing)
+{
+    <div>Loading....</div>
+}
+else
+{
+    @if (Categories.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Categories)
+                {
+                    <tr>
+                        <td>@category.Name</td>
+                        <td>
+                            <a href="@($"category/update/{category.Id}")" class="btn btn-success">Edit</a>
+                            <button @onclick="() => HandleDelete(category.Id)" class="btn btn-danger">Delete</button>
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div>No Categories...</div>
+    }
+
+}
+
+
+@code {
+    public bool isProcessing { get; set; } = true;
+
+    public IEnumerable<Category> Categories { get; set; } = new List<Category>();
+    private BsModal confirmModal;
+    private int DeleteCategoryID { get; set; } = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCategories();
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    public async Task LoadCategories()
+    {
+        Categories = await _categoryRepository.GetAllAsync();
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        DeleteCategoryID = id;
+        var category = Categories.FirstOrDefault(c => c.Id == id);
+        if (confirmModal != null)
+        {
+            await confirmModal.SetCategoryAsync(category);
+        }
+        await _JS.InvokeVoidAsync("ShowConfirmationModal");
+    }
+
+    private async Task ConfirmDelete_Click(bool isConfimed)
+    {
+        isProcessing = true;
+        await _JS.InvokeVoidAsync("HideConfirmationModal");
+        if (isConfimed && DeleteCategoryID > 0)
+        {
+            var result = await _categoryRepository.DeleteAsync(DeleteCategoryID);
+            if (result)
+                Console.WriteLine("Deleted");
+            else
+                Console.WriteLine("Not deleted");
+            await LoadCategories();
+        }
+        isProcessing = false;
+    }
+}

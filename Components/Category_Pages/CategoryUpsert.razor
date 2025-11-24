@@ -1,0 +1,71 @@
+@page "/category/create"
+@page "/category/update/{id:int}"
+@inject ICategoryRepository _categoryRepository
+@inject IJSRuntime _JS
+@inject NavigationManager _navigationManager
+
+
+<h1>@(Id == 0 ? "Create" : "Update") Category</h1>
+<h1>@Id</h1>
+
+@if (IsProcessing)
+{
+    <div>Loading...</div>
+}
+else
+{
+    <EditForm Model="category" FormName="CategoryUpsertForm" OnValidSubmit="UpsertCategory">
+        <DataAnnotationsValidator />
+        <div class="col-sm-2">
+            <label for="name" class="form-label">Name</label>
+            <InputText @bind-Value="category.Name" class="form-control" id="name"></InputText>
+            <ValidationMessage For="@(() => category.Name)" />
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">@(Id == 0 ? "Create" : "Update")</button>
+        </div>
+    </EditForm>
+
+}
+
+
+
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Category category { get; set; } = new Category();
+    private bool IsProcessing { get; set; } = true;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCategory();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCategory()
+    {
+        category = await _categoryRepository.GetAsync(Id);
+    }
+
+    private async Task UpsertCategory()
+    {
+        IsProcessing = true;
+        if (Id == 0)
+        {
+            await _categoryRepository.CreateAsync(category);
+        }
+        else
+        {
+            await _categoryRepository.UpdateAsync(category);
+        }
+        IsProcessing = false;
+        _navigationManager.NavigateTo("category");
+    }
+
+
+}

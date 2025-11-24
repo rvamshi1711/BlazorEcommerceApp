@@ -1,0 +1,103 @@
+@page "/product"
+@using System.Runtime.CompilerServices
+@using System.Threading.Tasks
+@inject IProductRepository _productRepository
+@inject IJSRuntime _JS
+<BsModal @ref="confirmModal" OnModalConfirmation="ConfirmDelete_Click">
+</BsModal>
+<h3>Product List</h3>
+<div class="col-10 text-end">
+    <a href="product/create" class="btn btn-primary ">Add New Product</a>
+</div>
+
+@if (isProcessing)
+{
+    <div>Loading....</div>
+}
+else
+{
+    @if (Products.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Products)
+                {
+                    <tr>
+                        <td>@product.Name</td>
+                        <td>@product.Price</td>
+                        <td>@product.Category.Name</td>
+                        <td>
+                            <a href="@($"product/update/{product.Id}")" class="btn btn-success">Edit</a>
+                            <button @onclick="() => HandleDelete(product.Id)" class="btn btn-danger">Delete</button>
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div>No Products...</div>
+    }
+
+}
+
+
+@code {
+    public bool isProcessing { get; set; } = true;
+
+    public IEnumerable<Product> Products { get; set; } = new List<Product>();
+    private BsModal confirmModal;
+    private int DeleteProductID { get; set; } = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadProducts();
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    public async Task LoadProducts()
+    {
+        Products = await _productRepository.GetAllAsync();
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        DeleteProductID = id;
+        var product = Products.FirstOrDefault(c => c.Id == id);
+        if (confirmModal != null)
+        {
+            //await confirmModal.SetProductAsync(product);
+        }
+        await _JS.InvokeVoidAsync("ShowConfirmationModal");
+    }
+
+    private async Task ConfirmDelete_Click(bool isConfimed)
+    {
+        isProcessing = true;
+        await _JS.InvokeVoidAsync("HideConfirmationModal");
+        if (isConfimed && DeleteProductID > 0)
+        {
+            var result = await _productRepository.DeleteAsync(DeleteProductID);
+            if (result)
+                Console.WriteLine("Deleted");
+            else
+                Console.WriteLine("Not deleted");
+            await LoadProducts();
+        }
+        isProcessing = false;
+    }
+}
